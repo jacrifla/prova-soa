@@ -55,21 +55,41 @@ class VendaController{
 
     public function insert(Request $request, Response $response){
         try{
-            $data = $request->body();
-            $success = VendaModel::insert($data);
+            $data    = $request->body();
 
-            if($success){
-                $data['id'] = VendaModel::lastInsertId();
-                $response::json([
-                    'status' => 'success',
-                    'dados' => $data
-                ], 201);
+            $valido  = $this->camposObrigatorios($data, true);
+
+            if($valido){
+                if($this->camposVazios($data)){
+                    $success = VendaModel::insert($data);
+                    if($success){
+                        $data['id'] = VendaModel::lastInsertId();
+                        $response::json([
+                            'status' => 'success',
+                            'dados' => $data
+                        ], 201);
+                    }else{
+                        $response::json([
+                            'status' => 'error',
+                            'msg' => 'Internal Error'
+                        ], 500);
+                    }
+
+                    else{
+                        $response::json([
+                            'status' => 'error',
+                            'msg' => 'Preencha os valores'
+                        ], 406);
+                    }
+               
             }else{
                 $response::json([
                     'status' => 'error',
-                    'msg' => 'Internal Error'
-                ], 500);
+                    'msg' => 'Todos os campos são obrigatórios.'
+                ], 406);
             }
+
+            
         }catch (\Exception $e){
             $response::json([
                 'status' => 'error',
@@ -126,23 +146,52 @@ class VendaController{
         }
     }
 
-    public function validateNumero(){
+    public function camposObrigatorios($campos, $insercao){
+
+        $campos_obrigatorios = ['cliente', 'sub_total', 'desconto','acrescimo','total'];
+        if(!$insercao){
+            array_push($campos_obrigatorios, "id_venda");
+        }
+
+        foreach ($campos_obrigatorios as $campo) {
+            if (!array_key_exists($campo, $campos)) {
+                return false; // Faltam campos obrigatórios
+            }
+        }
+
+        return true;
 
     }
 
-    public function validateCliente(){
+    public function camposVazios($campos){
+
+        foreach ($campos as $campo) {
+            if ($campo == NULL) {
+                return false; // Faltam campos preenchidos
+            }
+        }
+
+        return true;
 
     }
 
-    public function validateNegativo(){
+    public function validateNumero($dado){
+
+    }
+
+    public function validateCliente($dado){
+
+    }
+
+    public function validateNegativo($dado){
         
     }
 
-    public function validateDesconto(){
+    public function validateDesconto($dado){
 
     }
 
-    public function validateTotal(){
+    public function validateTotal($dado){
 
     }
 }
