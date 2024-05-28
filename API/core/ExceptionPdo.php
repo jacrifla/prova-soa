@@ -20,7 +20,8 @@
             } else if(strpos($error, 'does not exist') != false){
                 return 'Credentials fail';
             } else{
-                return 'Internal error';
+               // return 'Internal error';
+               return $error;
             }
         }
 

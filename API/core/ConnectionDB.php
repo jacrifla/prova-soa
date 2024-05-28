@@ -2,7 +2,7 @@
 
 define('SGBD'       , 'mysql'       );
 define('HOST'       , 'localhost'   );
-define('DBNAME'     , 'tb_venda'       );
+define('DBNAME'     , 'soa'       );
 define('CHARSET'    , 'utf8'        );
 define('USER'       , 'root'        );
 define('PASSWORD'   , ''            );
