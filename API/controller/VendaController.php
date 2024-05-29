@@ -31,6 +31,8 @@ class VendaController{
 
     public function find(Request $request, Response $response, array $url){
         try{
+
+            if(is_numeric($url[0])){
             $data = VendaModel::find($url[0]);
 
             if($data){
@@ -44,6 +46,13 @@ class VendaController{
                     'msg' => 'Not found'
                 ], 404);
             }
+        }else{
+            $response::json([
+                'status' => 'error',
+                'msg' => 'O id deve ser numerico'
+            ], 500);
+
+        }
         }catch (\Exception $e){
             $response::json([
                 'status' => 'error',
@@ -122,19 +131,29 @@ class VendaController{
 
     public function delete(Request $request, Response $response, array $url){
         try{
-            $data = VendaModel::delete($url[0]);
+            if(is_numeric($url[0])){
+                $data = VendaModel::delete($url[0]);
 
-            if($data){
-                $response::json([
-                    'status' => 'success',
-                    'dados' => $data
-                ], 200);
+                if($data){
+                    $response::json([
+                        'status' => 'success',
+                        'dados' => $data
+                    ], 200);
+                }else{
+                    $response::json([
+                        'status' => 'error',
+                        'msg' => 'Not found'
+                    ], 404);
+                }
+
             }else{
                 $response::json([
                     'status' => 'error',
-                    'msg' => 'Not found'
-                ], 404);
+                    'msg' => 'O id deve ser numerico'
+                ], 500);
+              
             }
+           
         }catch (\Exception $e){
             $response::json([
                 'status' => 'error',
