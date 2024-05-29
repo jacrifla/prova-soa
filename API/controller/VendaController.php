@@ -56,11 +56,8 @@ class VendaController{
     public function insert(Request $request, Response $response){
         try{
             $data    = $request->body();
-
-            $valido  = $this->camposObrigatorios($data, true);
-
-            if($valido){
-                if($this->camposVazios($data)){
+            $valido  = $this->validateAll($data, true);
+            if($valido == 'sucesso'){                   
                     $success = VendaModel::insert($data);
                     if($success){
                         $data['id'] = VendaModel::lastInsertId();
@@ -73,19 +70,11 @@ class VendaController{
                             'status' => 'error',
                             'msg' => 'Internal Error'
                         ], 500);
-                    }
-
-                    else{
-                        $response::json([
-                            'status' => 'error',
-                            'msg' => 'Preencha os valores'
-                        ], 406);
-                    }
-               
+                    } 
             }else{
                 $response::json([
                     'status' => 'error',
-                    'msg' => 'Todos os campos são obrigatórios.'
+                    'msg' => $valido
                 ], 406);
             }
 
@@ -101,18 +90,26 @@ class VendaController{
     public function update(Request $request, Response $response){
         try{
             $data = $request->body();
-            $success = VendaModel::update($data);
+            $valido  = $this->validateAll($data, false);
+            if($valido == 'sucesso'){    
+                $success = VendaModel::update($data);
 
-            if($success){
-                $response::json([
-                    'status' => 'success',
-                    'dados' => $data
-                ], 201);
+                if($success){
+                    $response::json([
+                        'status' => 'success',
+                        'dados' => $data
+                    ], 201);
+                }else{
+                    $response::json([
+                        'status' => 'error',
+                        'msg' => 'Internal Error'
+                    ], 500);
+                }
             }else{
                 $response::json([
                     'status' => 'error',
-                    'msg' => 'Internal Error'
-                ], 500);
+                    'msg' => $valido
+                ], 406);
             }
         }catch (\Exception $e){
             $response::json([
@@ -146,6 +143,7 @@ class VendaController{
         }
     }
 
+
     public function camposObrigatorios($campos, $insercao){
 
         $campos_obrigatorios = ['cliente', 'sub_total', 'desconto','acrescimo','total'];
@@ -169,29 +167,66 @@ class VendaController{
             if ($campo == NULL) {
                 return false; // Faltam campos preenchidos
             }
+            if(is_numeric($campo) && (floatval($campo) < 0)){
+                return false;
+            }
         }
 
         return true;
 
     }
 
-    public function validateNumero($dado){
-
-    }
-
     public function validateCliente($dado){
+        if(strlen($dado) > 3){
+            return true;
+        }
+
+        return false;
 
     }
 
-    public function validateNegativo($dado){
-        
+    public function validateDesconto($desconto, $subtotal){
+        if($desconto < $subtotal){
+            return true;
+        }
+        return false;
     }
 
-    public function validateDesconto($dado){
+    public function validateTotal($total, $subtotal, $acrescimo, $desconto){
+        if($total == (($subtotal+$acrescimo)- $desconto)){
+            return true;
+        }
+
+        return false;
 
     }
 
-    public function validateTotal($dado){
+    public function validateAll($data, $insercao){
+
+        if($this->camposObrigatorios($data, $insercao)){
+            if($this->camposVazios($data)){
+                if(!$this->validateCliente($data['cliente'])){
+                    return 'O nome do cliente deve conter mais de 3 caracteres';
+                }
+                $desconto    = floatval($data['desconto']);
+                $subtotal    = floatval($data['sub_total']);
+                $acrescimo   = floatval($data['acrescimo']);
+                $total       = floatval($data['total']);
+                if($this->validateDesconto($desconto, $subtotal)){
+                    if($this->validateTotal($total, $subtotal, $acrescimo, $desconto)){
+                        return 'sucesso';
+                    }else{
+                        return 'Total não corresponde ao valor da venda';
+                    }
+                }else{
+                    return 'Desconto não pode ser maior que o sub total';
+                }
+            }else{
+                return 'Os campos devem estar preenchidos corretamente';
+            }
+        }else{
+            return 'Todos os campos são obrigatórios';
+        }
 
     }
 }
